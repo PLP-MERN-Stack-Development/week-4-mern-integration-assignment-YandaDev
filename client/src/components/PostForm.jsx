@@ -60,7 +60,6 @@ function PostForm({ onSubmit, initialData = {}, categories, loading, isEdit = fa
     formData.append('title', title);
     formData.append('content', content);
     formData.append('category', category);
-    formData.append('author', user.id);
     if (tags) {
       formData.append('tags', tags);
     }
@@ -78,7 +77,10 @@ function PostForm({ onSubmit, initialData = {}, categories, loading, isEdit = fa
           },
           body: formData
         });
-        if (!response.ok) throw new Error('Failed to update post');
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to update post');
+        }
         result = { success: true };
       } else {
         const response = await fetch('/api/posts', {
@@ -88,7 +90,10 @@ function PostForm({ onSubmit, initialData = {}, categories, loading, isEdit = fa
           },
           body: formData
         });
-        if (!response.ok) throw new Error('Failed to create post');
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to create post');
+        }
         result = { success: true };
       }
       
@@ -97,6 +102,7 @@ function PostForm({ onSubmit, initialData = {}, categories, loading, isEdit = fa
         if (onSubmit) onSubmit({ title, content, category, tags });
       }
     } catch (error) {
+      console.error('Post submission error:', error);
       setErrors(prev => ({ ...prev, form: error.message || 'An error occurred' }));
     }
   };

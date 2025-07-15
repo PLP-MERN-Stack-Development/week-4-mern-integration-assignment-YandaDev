@@ -19,11 +19,19 @@ router.post(
   body('name').notEmpty().isLength({ max: 50 }),
   async (req, res, next) => {
     try {
-      validationResult(req).throw();
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          errors: errors.array()
+        });
+      }
+      
       const category = new Category(req.body);
       await category.save();
       res.status(201).json(category);
     } catch (err) {
+      console.error('Category creation error:', err);
       next(err);
     }
   }
