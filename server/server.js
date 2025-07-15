@@ -41,6 +41,9 @@ app.use('/api/posts', postRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/auth', authRoutes);
 
+// Error handling middleware
+app.use(errorHandler);
+
 // Root route
 app.get('/', (req, res) => {
   res.send('MERN Blog API is running');
