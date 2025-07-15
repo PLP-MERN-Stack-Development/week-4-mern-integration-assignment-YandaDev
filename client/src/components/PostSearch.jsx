@@ -65,13 +65,18 @@ function PostSearch() {
             value={selectedCategory}
             onChange={handleCategoryChange}
             className="form-select pr-10 appearance-none cursor-pointer"
+            disabled={!categories || categories.length === 0}
           >
             <option value="">All categories</option>
-            {categories.map(cat => (
-              <option key={cat._id} value={cat._id}>
-                {cat.name}
-              </option>
-            ))}
+            {categories && categories.length > 0 ? (
+              categories.map(cat => (
+                <option key={cat._id} value={cat._id}>
+                  {cat.name}
+                </option>
+              ))
+            ) : (
+              <option disabled>No categories available</option>
+            )}
           </select>
           <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
             <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

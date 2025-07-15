@@ -10,16 +10,38 @@ export function useCategories() {
 export function CategoriesProvider({ children }) {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchCategories = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await categoryService.getAllCategories();
+      setCategories(data);
+    } catch (err) {
+      setError(err.message || 'Failed to fetch categories');
+      console.error('Error fetching categories:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    categoryService.getAllCategories().then(data => {
-      setCategories(data);
-      setLoading(false);
-    });
+    fetchCategories();
   }, []);
 
+  const refetchCategories = () => {
+    fetchCategories();
+  };
+
   return (
-    <CategoriesContext.Provider value={{ categories, setCategories, loading }}>
+    <CategoriesContext.Provider value={{ 
+      categories, 
+      setCategories, 
+      loading, 
+      error, 
+      refetchCategories 
+    }}>
       {children}
     </CategoriesContext.Provider>
   );
