@@ -172,9 +172,13 @@ function PostForm({ onSubmit, initialData = {}, categories, loading, isEdit = fa
                     required
                   >
                     <option value="">Select a category</option>
-                    {categories.map(cat => (
-                      <option key={cat._id} value={cat._id}>{cat.name}</option>
-                    ))}
+                    {categories && categories.length > 0 ? (
+                      categories.map(cat => (
+                        <option key={cat._id} value={cat._id}>{cat.name}</option>
+                      ))
+                    ) : (
+                      <option disabled>No categories available</option>
+                    )}
                   </select>
                   <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                     <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -183,6 +187,14 @@ function PostForm({ onSubmit, initialData = {}, categories, loading, isEdit = fa
                   </div>
                 </div>
                 {errors.category && <div className="text-red-500 text-sm mt-1">{errors.category}</div>}
+                {(!categories || categories.length === 0) && (
+                  <div className="text-amber-600 text-sm mt-1 flex items-center">
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    No categories available. Please create categories first.
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
