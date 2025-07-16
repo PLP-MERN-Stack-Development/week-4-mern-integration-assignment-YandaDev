@@ -113,7 +113,14 @@ router.get('/search', async (req, res, next) => {
 // GET /api/posts/:id - Get a specific post
 router.get('/:id', param('id').isMongoId(), async (req, res, next) => {
   try {
-    validationResult(req).throw();
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        errors: errors.array()
+      });
+    }
+    
     const post = await Post.findById(req.params.id)
       .populate('author', 'username email avatar')
       .populate('category', 'name')
@@ -126,6 +133,7 @@ router.get('/:id', param('id').isMongoId(), async (req, res, next) => {
     
     res.json(post);
   } catch (err) {
+    console.error('Post fetch error:', err);
     next(err);
   }
 });
@@ -138,22 +146,53 @@ router.post(
   [
     body('title').notEmpty().isLength({ max: 100 }),
     body('content').notEmpty(),
-    body('category').isMongoId(),
-    body('tags').optional().isArray()
+    body('category').notEmpty().withMessage('Category is required'),
+    body('tags').optional()
   ],
   async (req, res, next) => {
     try {
-      validationResult(req).throw();
+      console.log('POST /api/posts - Request body:', req.body);
+      console.log('POST /api/posts - Authenticated user:', req.user);
+      
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          errors: errors.array()
+        });
+      }
       
       const postData = {
-        ...req.body,
-        author: req.user,
+        title: req.body.title,
+        content: req.body.content,
+        category: req.body.category,
+        author: req.user, // auth middleware sets req.user to user ID
         featuredImage: req.file ? req.file.filename : 'default-post.jpg'
       };
 
-      if (req.body.tags && typeof req.body.tags === 'string') {
-        postData.tags = req.body.tags.split(',').map(tag => tag.trim());
+      // Generate slug manually since pre-save hook isn't working
+      let baseSlug = req.body.title
+        .toLowerCase()
+        .replace(/[^\w ]+/g, '')
+        .replace(/ +/g, '-');
+      
+      // Ensure uniqueness
+      let slug = baseSlug;
+      let counter = 1;
+      while (await Post.findOne({ slug })) {
+        slug = `${baseSlug}-${counter}`;
+        counter++;
       }
+      postData.slug = slug;
+
+      // Handle tags: convert comma-separated string to array
+      if (req.body.tags && typeof req.body.tags === 'string') {
+        postData.tags = req.body.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
+      } else if (req.body.tags && Array.isArray(req.body.tags)) {
+        postData.tags = req.body.tags;
+      }
+
+      console.log('POST /api/posts - postData:', postData);
 
       const post = new Post(postData);
       await post.save();
@@ -162,6 +201,7 @@ router.post(
       
       res.status(201).json(post);
     } catch (err) {
+      console.error('Post creation error:', err);
       next(err);
     }
   }
@@ -176,18 +216,24 @@ router.put(
     param('id').isMongoId(),
     body('title').optional().isLength({ max: 100 }),
     body('content').optional(),
-    body('category').optional().isMongoId(),
-    body('tags').optional().isArray()
+    body('category').optional(),
+    body('tags').optional()
   ],
   async (req, res, next) => {
     try {
-      validationResult(req).throw();
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          errors: errors.array()
+        });
+      }
       
       const post = await Post.findById(req.params.id);
       if (!post) return res.status(404).json({ error: 'Post not found' });
       
       // Check if user owns the post
-      if (post.author.toString() !== req.user) {
+      if (post.author.toString() !== req.user.id) {
         return res.status(403).json({ error: 'Not authorized to update this post' });
       }
 
@@ -196,8 +242,11 @@ router.put(
         updateData.featuredImage = req.file.filename;
       }
 
+      // Handle tags: convert comma-separated string to array
       if (req.body.tags && typeof req.body.tags === 'string') {
-        updateData.tags = req.body.tags.split(',').map(tag => tag.trim());
+        updateData.tags = req.body.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
+      } else if (req.body.tags && Array.isArray(req.body.tags)) {
+        updateData.tags = req.body.tags;
       }
 
       const updatedPost = await Post.findByIdAndUpdate(req.params.id, updateData, { new: true })
@@ -206,6 +255,7 @@ router.put(
       
       res.json(updatedPost);
     } catch (err) {
+      console.error('Post update error:', err);
       next(err);
     }
   }
@@ -214,19 +264,26 @@ router.put(
 // DELETE /api/posts/:id - Delete a post
 router.delete('/:id', auth, param('id').isMongoId(), async (req, res, next) => {
   try {
-    validationResult(req).throw();
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        errors: errors.array()
+      });
+    }
     
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ error: 'Post not found' });
     
     // Check if user owns the post
-    if (post.author.toString() !== req.user) {
+    if (post.author.toString() !== req.user.id) {
       return res.status(403).json({ error: 'Not authorized to delete this post' });
     }
 
     await Post.findByIdAndDelete(req.params.id);
     res.json({ message: 'Post deleted successfully' });
   } catch (err) {
+    console.error('Post deletion error:', err);
     next(err);
   }
 });
@@ -241,7 +298,13 @@ router.post(
   ],
   async (req, res, next) => {
     try {
-      validationResult(req).throw();
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          errors: errors.array()
+        });
+      }
       
       const post = await Post.findById(req.params.id);
       if (!post) return res.status(404).json({ error: 'Post not found' });
@@ -251,6 +314,7 @@ router.post(
       
       res.status(201).json(post.comments);
     } catch (err) {
+      console.error('Comment creation error:', err);
       next(err);
     }
   }
