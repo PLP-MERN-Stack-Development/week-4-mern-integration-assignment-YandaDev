@@ -14,14 +14,25 @@ function PostPage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    if (!id) {
+      setError('No post ID provided');
+      setLoading(false);
+      return;
+    }
+    
     setLoading(true);
     setError(null);
-    postService.getById(id)
+    
+    console.log('Fetching post with ID:', id); // Debug log
+    
+    postService.getPost(id)
       .then(data => {
+        console.log('Post data received:', data); // Debug log
         setPost(data);
         setLoading(false);
       })
-      .catch(() => {
+      .catch(error => {
+        console.error('Error fetching post:', error); // Debug log
         setError('Failed to load post.');
         setLoading(false);
       });
@@ -33,7 +44,7 @@ function PostPage() {
     }
 
     try {
-      await postService.delete(id);
+      await postService.deletePost(id);
       navigate('/');
     } catch (err) {
       setError('Failed to delete post');
@@ -86,18 +97,21 @@ function PostPage() {
     );
   }
 
-  const canEdit = user && (user._id === post.author._id || user.role === 'admin');
+  const canEdit = user && post.author && (user._id === post.author._id || user.role === 'admin');
 
   return (
     <div className="max-w-4xl mx-auto">
       {/* Post Header */}
       <div className="card overflow-hidden mb-8">
-        {post.image && (
+        {post.featuredImage && post.featuredImage !== 'default-post.jpg' && (
           <div className="relative">
             <img
-              src={post.image}
+              src={`http://localhost:5000/uploads/${post.featuredImage}`}
               alt={post.title}
               className="w-full h-64 object-cover"
+              onError={(e) => {
+                e.target.style.display = 'none';
+              }}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
           </div>
@@ -142,7 +156,7 @@ function PostPage() {
             </div>
             <span>•</span>
             <span>{new Date(post.createdAt).toLocaleDateString()}</span>
-            {post.category && (
+            {post.category && post.category.name && (
               <>
                 <span>•</span>
                 <span className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-3 py-1 rounded-full text-xs font-medium">
