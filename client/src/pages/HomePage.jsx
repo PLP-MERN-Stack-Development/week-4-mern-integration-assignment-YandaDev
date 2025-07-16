@@ -23,7 +23,7 @@ function HomePage() {
   const fetchPosts = async () => {
     try {
       setLoading(true);
-      const data = await postService.getAll({ page: currentPage, limit: 6 });
+      const data = await postService.getAllPosts(currentPage, 6);
       setPosts(data.posts || data);
       setTotalPages(data.totalPages || 1);
     } catch (err) {
