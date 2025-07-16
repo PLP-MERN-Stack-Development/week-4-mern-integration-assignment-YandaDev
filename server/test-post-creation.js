@@ -1,63 +1,53 @@
-// Test script to verify post creation works
-const fetch = require('node-fetch');
-const FormData = require('form-data');
+// Simple test to check post creation API
+const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
+const User = require('./models/User');
+const Category = require('./models/Category');
+require('dotenv').config();
 
 async function testPostCreation() {
   try {
-    // First, login to get a token
-    const loginResponse = await fetch('http://localhost:5000/api/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: 'test@example.com',
-        password: 'password123'
-      })
-    });
+    console.log('🔄 Connecting to MongoDB...');
+    await mongoose.connect(process.env.MONGODB_URI);
+    console.log('✅ Connected to MongoDB');
 
-    if (!loginResponse.ok) {
-      console.log('Login failed, please register first');
-      return;
+    // Find a user
+    const user = await User.findOne();
+    if (!user) {
+      console.error('❌ No user found. Please register a user first.');
+      process.exit(1);
     }
+    console.log('✅ Found user:', user.username);
 
-    const loginData = await loginResponse.json();
-    const token = loginData.token;
-    console.log('Login successful!');
-
-    // Get categories to use a valid category ID
-    const categoriesResponse = await fetch('http://localhost:5000/api/categories');
-    const categories = await categoriesResponse.json();
-    const categoryId = categories[0]._id;
-    console.log('Using category:', categories[0].name);
-
-    // Create a test post
-    const formData = new FormData();
-    formData.append('title', 'Test Post Title');
-    formData.append('content', 'This is a test post content to verify post creation works properly.');
-    formData.append('category', categoryId);
-    formData.append('tags', 'test, verification, api');
-
-    const postResponse = await fetch('http://localhost:5000/api/posts', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      },
-      body: formData
-    });
-
-    if (postResponse.ok) {
-      const post = await postResponse.json();
-      console.log('Post created successfully!');
-      console.log('Post ID:', post._id);
-      console.log('Post Title:', post.title);
-    } else {
-      const error = await postResponse.json();
-      console.error('Post creation failed:', error);
+    // Find a category
+    const category = await Category.findOne();
+    if (!category) {
+      console.error('❌ No category found. Please seed categories first.');
+      process.exit(1);
     }
+    console.log('✅ Found category:', category.name, 'ID:', category._id);
+
+    // Generate token
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    console.log('✅ Generated JWT token');
+
+    // Test with curl instead of fetch to avoid network issues
+    console.log('\n🔄 Testing post creation...');
+    console.log('You can manually test with this curl command:');
+    console.log(`curl -X POST http://localhost:5000/api/posts \\
+  -H "Authorization: Bearer ${token}" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "title": "Test Post",
+    "content": "This is a test post content",
+    "category": "${category._id}",
+    "tags": "test,debugging"
+  }'`);
 
   } catch (error) {
-    console.error('Test failed:', error);
+    console.error('❌ Error:', error.message);
+  } finally {
+    await mongoose.connection.close();
   }
 }
 

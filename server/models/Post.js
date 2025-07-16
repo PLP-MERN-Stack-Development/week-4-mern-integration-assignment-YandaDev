@@ -67,16 +67,27 @@ const PostSchema = new mongoose.Schema(
 );
 
 // Create slug from title before saving
-PostSchema.pre('save', function (next) {
+PostSchema.pre('save', async function (next) {
   if (!this.isModified('title')) {
     return next();
   }
   
-  this.slug = this.title
+  // Generate base slug
+  let baseSlug = this.title
     .toLowerCase()
     .replace(/[^\w ]+/g, '')
     .replace(/ +/g, '-');
-    
+  
+  // Ensure uniqueness by adding number if needed
+  let slug = baseSlug;
+  let counter = 1;
+  
+  while (await this.constructor.findOne({ slug, _id: { $ne: this._id } })) {
+    slug = `${baseSlug}-${counter}`;
+    counter++;
+  }
+  
+  this.slug = slug;
   next();
 });
 

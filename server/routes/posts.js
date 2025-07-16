@@ -151,6 +151,9 @@ router.post(
   ],
   async (req, res, next) => {
     try {
+      console.log('POST /api/posts - Request body:', req.body);
+      console.log('POST /api/posts - Authenticated user:', req.user);
+      
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return res.status(400).json({
@@ -163,7 +166,7 @@ router.post(
         title: req.body.title,
         content: req.body.content,
         category: req.body.category,
-        author: req.user.id,
+        author: req.user, // Use req.user directly since auth middleware sets it to user ID
         featuredImage: req.file ? req.file.filename : 'default-post.jpg'
       };
 
@@ -173,6 +176,8 @@ router.post(
       } else if (req.body.tags && Array.isArray(req.body.tags)) {
         postData.tags = req.body.tags;
       }
+
+      console.log('POST /api/posts - postData:', postData);
 
       const post = new Post(postData);
       await post.save();
