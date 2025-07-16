@@ -29,15 +29,15 @@ Populates the database with default blog categories including:
 # Seed categories
 node seeds/seedCategories.js
 
-# Or using npm script
-npm run seed
+# Or using pnpm script
+pnpm run seed
 ```
 
 ### Run from project root:
 ```bash
 # From the server directory
 cd server
-npm run seed
+pnpm run seed
 ```
 
 ## Notes
