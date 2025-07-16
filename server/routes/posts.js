@@ -166,9 +166,24 @@ router.post(
         title: req.body.title,
         content: req.body.content,
         category: req.body.category,
-        author: req.user, // Use req.user directly since auth middleware sets it to user ID
+        author: req.user, // auth middleware sets req.user to user ID
         featuredImage: req.file ? req.file.filename : 'default-post.jpg'
       };
+
+      // Generate slug manually since pre-save hook isn't working
+      let baseSlug = req.body.title
+        .toLowerCase()
+        .replace(/[^\w ]+/g, '')
+        .replace(/ +/g, '-');
+      
+      // Ensure uniqueness
+      let slug = baseSlug;
+      let counter = 1;
+      while (await Post.findOne({ slug })) {
+        slug = `${baseSlug}-${counter}`;
+        counter++;
+      }
+      postData.slug = slug;
 
       // Handle tags: convert comma-separated string to array
       if (req.body.tags && typeof req.body.tags === 'string') {
