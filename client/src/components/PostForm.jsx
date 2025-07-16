@@ -77,11 +77,40 @@ function PostForm({ onSubmit, initialData = {}, categories, loading, isEdit = fa
           },
           body: formData
         });
+        
+        console.log('Update response status:', response.status);
+        console.log('Update response headers:', response.headers.get('content-type'));
+        
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to update post');
+          let errorMessage = 'Failed to update post';
+          const contentType = response.headers.get('content-type');
+          
+          if (contentType && contentType.includes('application/json')) {
+            try {
+              const errorData = await response.json();
+              errorMessage = errorData.error || errorMessage;
+            } catch (jsonError) {
+              console.error('Error parsing JSON error response:', jsonError);
+              errorMessage = `Server error (${response.status})`;
+            }
+          } else {
+            const textResponse = await response.text();
+            console.error('Non-JSON response:', textResponse);
+            errorMessage = `Server error (${response.status}): ${textResponse.substring(0, 100)}`;
+          }
+          
+          throw new Error(errorMessage);
         }
-        result = { success: true };
+        
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const responseData = await response.json();
+          console.log('Update success response:', responseData);
+          result = { success: true, data: responseData };
+        } else {
+          console.log('Non-JSON update success response');
+          result = { success: true };
+        }
       } else {
         const response = await fetch('/api/posts', {
           method: 'POST',
@@ -90,11 +119,40 @@ function PostForm({ onSubmit, initialData = {}, categories, loading, isEdit = fa
           },
           body: formData
         });
+        
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers.get('content-type'));
+        
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to create post');
+          let errorMessage = 'Failed to create post';
+          const contentType = response.headers.get('content-type');
+          
+          if (contentType && contentType.includes('application/json')) {
+            try {
+              const errorData = await response.json();
+              errorMessage = errorData.error || errorMessage;
+            } catch (jsonError) {
+              console.error('Error parsing JSON error response:', jsonError);
+              errorMessage = `Server error (${response.status})`;
+            }
+          } else {
+            const textResponse = await response.text();
+            console.error('Non-JSON response:', textResponse);
+            errorMessage = `Server error (${response.status}): ${textResponse.substring(0, 100)}`;
+          }
+          
+          throw new Error(errorMessage);
         }
-        result = { success: true };
+        
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const responseData = await response.json();
+          console.log('Success response:', responseData);
+          result = { success: true, data: responseData };
+        } else {
+          console.log('Non-JSON success response');
+          result = { success: true };
+        }
       }
       
       if (result.success) {
