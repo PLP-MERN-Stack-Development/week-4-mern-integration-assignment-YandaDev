@@ -14,8 +14,8 @@ A full-stack blog application built with MongoDB, Express.js, React.js, and Node
 - [API Documentation](#api-documentation)
 - [Features Overview](#features-overview)
 - [Database Models](#database-models)
+- [Screenshots](#screenshots)
 - [Contributing](#contributing)
-- [License](#license)
 
 ## Features
 
@@ -352,14 +352,44 @@ pnpm run seed
 }
 ```
 
+## Screenshots
+
+### Home Page
+![MERN Blog Homepage](screenshots/mern-blog-homepage.png)
+
+*The homepage showcasing the blog posts list with search functionality and clean navigation.*
+
+### Authentication
+
+#### Login Page
+![MERN Blog Login Page](screenshots/mern-blog-login-page.png)
+
+*User-friendly login interface with form validation and responsive design.*
+
+#### Registration Page
+![MERN Blog Registration Page](screenshots/mern-blog-registration-page.png)
+
+*Registration form allowing new users to create accounts with proper validation.*
+
+### Post Management
+![MERN Blog Create Post](screenshots/mern-blog-create-post.png)
+
+*Create and edit post interface with rich text editing, category selection, and image upload functionality.*
+
+### Comments System
+![MERN Blog Comments Functionality](screenshots/mern-blog-comments-functionality.png)
+
+*Interactive comments section showing user engagement with real-time comment posting and management.*
+
+### Responsive Design
+![MERN Blog Responsive Design](screenshots/mern-blog-responsive-design.png)
+
+*Demonstration of the application's responsive design across different screen sizes and devices.*
+
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature-name`
 3. Commit your changes: `git commit -m 'Add feature'`
 4. Push to the branch: `git push origin feature-name`
-5. Submit a pull request
-
-## License
-
-This project is licensed under the MIT License. See the LICENSE file for details. 
+5. Submit a pull request 
